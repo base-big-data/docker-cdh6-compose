@@ -1,0 +1,53 @@
+version: "3"
+
+networks:
+  docker-cdh6-networks:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.166.8.0/24
+
+services:
+  hadoop:
+    build:
+      context: ${HADOOP_WORKERSPACE}
+      dockerfile: Dockerfile
+    image: ccinn/docker-cdh6-hadoop:latest
+    networks:
+      - docker-cdh6-networks
+    ports:
+      - 9870:9870 # namenode web-ui
+      - 9864:9864 # datanode web-ui
+    privileged: true
+  hive:
+    build:
+      context: ${HIVE_WORKERSPACE}
+      dockerfile: Dockerfile
+    image: ccinn/docker-cdh6-hive:latest
+    networks:
+      - docker-cdh6-networks
+    depends_on:
+      - hadoop
+      - hive-postgresql
+    privileged: true
+  hive-postgresql:
+    build:
+      context: ${HIVE_POSTGRESQL_WORKERSPACE}
+      dockerfile: Dockerfile
+    image: ccinn/docker-cdh6-hive-postgresql:latest
+    networks:
+      - docker-cdh6-networks
+    depends_on:
+      - hadoop
+    privileged: true
+  impala:
+    build:
+      context: ${IMPALA_WORKERSPACE}
+      dockerfile: Dockerfile
+    image: ccinn/docker-cdh6-impala:latest
+    networks:
+      - docker-cdh6-networks
+    depends_on:
+      - hive
+    privileged: true
